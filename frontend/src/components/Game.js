@@ -1,116 +1,139 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { generateImage, submitRound } from '../api';
+import { generateImage, submitRound, getTimerDuration } from '../api';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import '../index.css'; // Make sure to import your CSS (contains popup styles)
 
 export default function Game({ teamId }) {
-  const [roundNumber, setRoundNumber] = useState(1);
   const [prompt, setPrompt] = useState('');
   const [promptsUsed, setPromptsUsed] = useState([]);
   const [imageUrls, setImageUrls] = useState([]);
   const [currentImage, setCurrentImage] = useState(null);
   const [score, setScore] = useState(10);
-  const [timer, setTimer] = useState(120);
+  const [timer, setTimer] = useState(0);
+  const [initialTimer, setInitialTimer] = useState(120);
   const [guessCorrect, setGuessCorrect] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [timeTaken, setTimeTaken] = useState(0);
 
   const timerRef = useRef(null);
+  const navigate = useNavigate(); // Initialize navigate
 
-  // Timer countdown - runs only if not loading and not guessed correct
+  // Fetch timer from backend on load
+  useEffect(() => {
+    const fetchTimer = async () => {
+      try {
+        const duration = await getTimerDuration();
+        setInitialTimer(duration);
+        setTimer(duration);
+      } catch (err) {
+        console.error('Failed to fetch timer duration:', err);
+      }
+    };
+
+    fetchTimer();
+  }, []);
+
+  // Timer logic
   useEffect(() => {
     if (loading || guessCorrect) {
-      if (timerRef.current) clearInterval(timerRef.current);
+      clearInterval(timerRef.current);
       return;
     }
-    if (timer <= 0) return;
+
+    if (timer <= 0) {
+      clearInterval(timerRef.current);
+      return;
+    }
 
     timerRef.current = setInterval(() => {
-      setTimer((t) => {
-        if (t <= 1) {
+      setTimer((prev) => {
+        if (prev <= 1) {
           clearInterval(timerRef.current);
           return 0;
         }
-        return t - 1;
+        return prev - 1;
       });
     }, 1000);
 
     return () => clearInterval(timerRef.current);
   }, [loading, guessCorrect, timer]);
 
-  // Generate Image Handler
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
 
     try {
       setLoading(true);
-      console.log('🟡 Sending prompt to backend:', prompt);
       const url = await generateImage(prompt);
-      console.log('🟢 Received image URL:', url);
-
       setPromptsUsed((prev) => [...prev, prompt]);
       setImageUrls((prev) => [...prev, url]);
       setCurrentImage(url);
 
-      // Calculate score for this clue
       if (imageUrls.length < 5) {
-        const newScore = 10 - (imageUrls.length * 2);
+        const newScore = 10 - imageUrls.length * 2;
         setScore(Math.max(newScore, 2));
       }
 
       setPrompt('');
     } catch (err) {
-      console.error('🔴 Image generation failed:', err);
+      console.error('Image generation failed:', err);
       alert('Image generation failed.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Correct Guess Handler - submit round and reset for next
   const handleCorrectGuess = async () => {
-    const timeTaken = 120 - timer;
+    const taken = initialTimer - timer;
+    setTimeTaken(taken);
     setGuessCorrect(true);
+    clearInterval(timerRef.current);
 
     try {
       await submitRound({
         teamId,
-        roundNumber,
         promptsUsed,
         imageUrls,
         score,
-        timeTaken,
+        timeTaken: taken,
       });
-      alert(`✅ Correct! You scored ${score} points.`);
-      resetRound();
+
+      setShowPopup(true); // Show modal instead of alert
     } catch (err) {
-      console.error('❌ Failed to save round:', err);
-      alert('Failed to save round.');
+      console.error('Failed to save round:', err);
+      alert('Failed to save data.');
     }
   };
 
-  // Reset all for next round
-  const resetRound = () => {
+  const resetGame = () => {
     setPrompt('');
     setPromptsUsed([]);
     setImageUrls([]);
     setCurrentImage(null);
     setScore(10);
-    setTimer(120);
+    setTimer(initialTimer);
     setGuessCorrect(false);
-    setRoundNumber((prev) => prev + 1);
+    setShowPopup(false);
+  };
+
+  const handleNextClick = () => {
+    // Navigate to the login page after clicking next in the popup
+    resetGame(); // Reset the game state
+    navigate('/'); // Redirect to login page
   };
 
   return (
     <div className="container">
-      <h2>🎯 Round {roundNumber}</h2>
+      <h2>🧠 Guess the Object</h2>
 
       <div className={`timer ${timer < 30 ? 'low' : ''}`}>
         ⏱️ {timer > 0 ? `${timer}s` : '⏰ Time’s up!'}
       </div>
 
-      {/* Show prompt input only if no current image (waiting for new prompt) */}
       {!currentImage && (
         <div className="prompt-box">
           <textarea
-            placeholder="Enter prompt for image generation"
+            placeholder="Enter a prompt to generate an image"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             disabled={loading || guessCorrect || timer === 0}
@@ -124,7 +147,6 @@ export default function Game({ teamId }) {
         </div>
       )}
 
-      {/* Show image + buttons when image is ready */}
       {currentImage && (
         <div>
           <div className="image-box">
@@ -135,8 +157,6 @@ export default function Game({ teamId }) {
             <button onClick={handleCorrectGuess} disabled={guessCorrect || timer === 0}>
               ✅ Correct Guess
             </button>
-
-            {/* Next clue resets prompt input and allows new image generation */}
             <button
               onClick={() => {
                 setCurrentImage(null);
@@ -150,7 +170,21 @@ export default function Game({ teamId }) {
         </div>
       )}
 
-      <div className="score">⭐ Current Score: {score}</div>
+      <div className="score">⭐ Score: {score}</div>
+
+      {/* ✅ Modal popup after correct guess */}
+      {showPopup && (
+        <div className="popup-overlay">
+          <div className="popup-box">
+            <h3>✅ Correct Guess!</h3>
+            <p>🆔 <strong>Team:</strong> {teamId}</p>
+            <p>⭐ <strong>Score:</strong> {score} points</p>
+            <p>⏱️ <strong>Time Taken:</strong> {timeTaken} seconds</p>
+            <p>📝 <strong>Prompts Used:</strong> {promptsUsed.length} prompts</p> {/* Number of prompts used */}
+            <button onClick={handleNextClick}>Next</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import Admin from './components/Admin';
 
 function App() {
   const [teamId, setTeamId] = useState(null);
+  const [gameDuration, setGameDuration] = useState(120); // Default timer, admin can override
 
   return (
     <Routes>
@@ -15,11 +16,23 @@ function App() {
       />
       <Route
         path="/game"
-        element={teamId && teamId !== 'admin' ? <Game teamId={teamId} /> : <Navigate to="/" />}
+        element={
+          teamId && teamId !== 'admin' ? (
+            <Game teamId={teamId} gameDuration={gameDuration} />
+          ) : (
+            <Navigate to="/" />
+          )
+        }
       />
       <Route
         path="/admin"
-        element={teamId === 'admin' ? <Admin /> : <Navigate to="/" />}
+        element={
+          teamId === 'admin' ? (
+            <Admin setGameDuration={setGameDuration} />
+          ) : (
+            <Navigate to="/" />
+          )
+        }
       />
     </Routes>
   );

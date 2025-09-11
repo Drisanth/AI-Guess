@@ -34,3 +34,21 @@ export async function getLeaderboard() {
   if (!res.ok) throw new Error(await res.text());
   return await res.json();
 }
+
+// 🆕 Get current timer duration (for Game.js to load)
+export async function getTimerDuration() {
+  const res = await fetch(`${BASE_URL}/admin/timer`);
+  if (!res.ok) throw new Error(await res.text());
+  const data = await res.json();
+  return data.duration;
+}
+
+// 🆕 Set new timer duration (used in Admin.js)
+export async function setTimerDuration(duration) {
+  const res = await fetch(`${BASE_URL}/admin/timer`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ duration }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+}

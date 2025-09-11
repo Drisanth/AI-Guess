@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { getLeaderboard } from '../api';
+import { getLeaderboard, getTimerDuration, setTimerDuration } from '../api';
 
 export default function Admin() {
   const [teams, setTeams] = useState([]);
+  const [timerDuration, setTimerDurationState] = useState(120);
+  const [newDuration, setNewDuration] = useState('');
 
   useEffect(() => {
     fetchLeaderboard();
+    fetchCurrentTimer();
   }, []);
 
   const fetchLeaderboard = async () => {
@@ -14,6 +17,15 @@ export default function Admin() {
       setTeams(data.leaderboard);
     } catch (err) {
       alert('Failed to fetch leaderboard');
+    }
+  };
+
+  const fetchCurrentTimer = async () => {
+    try {
+      const duration = await getTimerDuration();
+      setTimerDurationState(duration);
+    } catch (err) {
+      console.error('Failed to fetch timer duration');
     }
   };
 
@@ -33,9 +45,38 @@ export default function Admin() {
     }
   };
 
+  const handleSetDuration = async () => {
+    const num = parseInt(newDuration);
+    if (isNaN(num) || num <= 0) {
+      alert('Enter valid duration in seconds.');
+      return;
+    }
+
+    try {
+      await setTimerDuration(num);
+      setTimerDurationState(num);
+      alert('⏱️ Timer duration updated!');
+      setNewDuration('');
+    } catch (err) {
+      alert('Failed to update timer duration');
+    }
+  };
+
   return (
     <div className="container">
       <h2>Admin Dashboard</h2>
+
+      <div className="timer-config">
+        <h4>⏱️ Current Timer Duration: {timerDuration} seconds</h4>
+        <input
+          type="number"
+          placeholder="Set new timer duration"
+          value={newDuration}
+          onChange={(e) => setNewDuration(e.target.value)}
+        />
+        <button onClick={handleSetDuration}>Update Timer</button>
+      </div>
+
       <table>
         <thead>
           <tr>
