@@ -1,0 +1,25 @@
+ai-guess-game/
+├── backend/
+│   ├── server.js
+│   ├── models/
+│   │   ├── Round.js
+│   │   └── Team.js
+│   ├── routes/
+│   │   ├── gameRoutes.js
+│   │   └── adminRoutes.js
+│   └── safeWords.txt
+├── frontend/
+│   ├── public/
+│   │   └── index.html
+│   ├── src/
+│   │   ├── App.js
+│   │   ├── index.js
+│   │   ├── index.css
+│   │   ├── api.js
+│   │   └── components/
+│   │       ├── Login.js
+│   │       ├── Game.js
+│   │       └── Admin.js
+├── .env
+├── package.json (for backend)
+└── README.md
