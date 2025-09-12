@@ -1,55 +1,72 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { generateImage, submitRound, getTimerDuration } from '../api';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
-import '../index.css'; // Make sure to import your CSS (contains popup styles)
+import { useNavigate } from 'react-router-dom';
+import '../index.css';
 
 export default function Game({ teamId }) {
   const [prompt, setPrompt] = useState('');
   const [promptsUsed, setPromptsUsed] = useState([]);
   const [imageUrls, setImageUrls] = useState([]);
   const [currentImage, setCurrentImage] = useState(null);
-  const [score, setScore] = useState(10);
+  const [score, setScore] = useState(0);
   const [timer, setTimer] = useState(0);
   const [initialTimer, setInitialTimer] = useState(120);
   const [guessCorrect, setGuessCorrect] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
+  const [showTimeoutPopup, setShowTimeoutPopup] = useState(false);
   const [timeTaken, setTimeTaken] = useState(0);
 
   const timerRef = useRef(null);
-  const navigate = useNavigate(); // Initialize navigate
+  const timerStartedRef = useRef(false); // Track if timer started
+  const navigate = useNavigate();
 
-  // Fetch timer from backend on load
+  // Fetch timer duration on mount
   useEffect(() => {
     const fetchTimer = async () => {
       try {
         const duration = await getTimerDuration();
         setInitialTimer(duration);
         setTimer(duration);
+        setScore(duration * 2);
       } catch (err) {
         console.error('Failed to fetch timer duration:', err);
       }
     };
-
     fetchTimer();
   }, []);
 
-  // Timer logic
+  // Timer countdown effect
   useEffect(() => {
     if (loading || guessCorrect) {
       clearInterval(timerRef.current);
       return;
     }
 
-    if (timer <= 0) {
+    // Don't start timer until initialTimer is set
+    if (timer === 0) {
       clearInterval(timerRef.current);
+      // Only show timeout popup if timer has started counting down
+      if (timerStartedRef.current && !showTimeoutPopup) {
+        setScore(0);
+        setTimeTaken(initialTimer);
+        setShowTimeoutPopup(true);
+      }
       return;
     }
+
+    // Start counting down timer
+    timerStartedRef.current = true;
 
     timerRef.current = setInterval(() => {
       setTimer((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current);
+          if (!showTimeoutPopup) {
+            setScore(0);
+            setTimeTaken(initialTimer);
+            setShowTimeoutPopup(true);
+          }
           return 0;
         }
         return prev - 1;
@@ -57,7 +74,14 @@ export default function Game({ teamId }) {
     }, 1000);
 
     return () => clearInterval(timerRef.current);
-  }, [loading, guessCorrect, timer]);
+  }, [loading, guessCorrect, timer, initialTimer, showTimeoutPopup]);
+
+  // Update score as time changes only if guess not correct and timer running
+  useEffect(() => {
+    if (!guessCorrect && timer > 0) {
+      setScore(timer * 2);
+    }
+  }, [timer, guessCorrect]);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -68,12 +92,6 @@ export default function Game({ teamId }) {
       setPromptsUsed((prev) => [...prev, prompt]);
       setImageUrls((prev) => [...prev, url]);
       setCurrentImage(url);
-
-      if (imageUrls.length < 5) {
-        const newScore = 10 - imageUrls.length * 2;
-        setScore(Math.max(newScore, 2));
-      }
-
       setPrompt('');
     } catch (err) {
       console.error('Image generation failed:', err);
@@ -98,7 +116,7 @@ export default function Game({ teamId }) {
         timeTaken: taken,
       });
 
-      setShowPopup(true); // Show modal instead of alert
+      setShowPopup(true);
     } catch (err) {
       console.error('Failed to save round:', err);
       alert('Failed to save data.');
@@ -110,16 +128,18 @@ export default function Game({ teamId }) {
     setPromptsUsed([]);
     setImageUrls([]);
     setCurrentImage(null);
-    setScore(10);
+    setScore(initialTimer * 2);
     setTimer(initialTimer);
     setGuessCorrect(false);
     setShowPopup(false);
+    setShowTimeoutPopup(false);
+    setTimeTaken(0);
+    timerStartedRef.current = false; // reset timer started flag
   };
 
   const handleNextClick = () => {
-    // Navigate to the login page after clicking next in the popup
-    resetGame(); // Reset the game state
-    navigate('/'); // Redirect to login page
+    resetGame();
+    navigate('/');
   };
 
   return (
@@ -170,9 +190,7 @@ export default function Game({ teamId }) {
         </div>
       )}
 
-      <div className="score">⭐ Score: {score}</div>
-
-      {/* ✅ Modal popup after correct guess */}
+      {/* Popup for correct guess */}
       {showPopup && (
         <div className="popup-overlay">
           <div className="popup-box">
@@ -180,7 +198,21 @@ export default function Game({ teamId }) {
             <p>🆔 <strong>Team:</strong> {teamId}</p>
             <p>⭐ <strong>Score:</strong> {score} points</p>
             <p>⏱️ <strong>Time Taken:</strong> {timeTaken} seconds</p>
-            <p>📝 <strong>Prompts Used:</strong> {promptsUsed.length} prompts</p> {/* Number of prompts used */}
+            <p>📝 <strong>Prompts Used:</strong> {promptsUsed.length} prompts</p>
+            <button onClick={handleNextClick}>Next</button>
+          </div>
+        </div>
+      )}
+
+      {/* Popup for timer running out */}
+      {showTimeoutPopup && (
+        <div className="popup-overlay">
+          <div className="popup-box">
+            <h3>⏰ Time’s Up!</h3>
+            <p>🆔 <strong>Team:</strong> {teamId}</p>
+            <p>⭐ <strong>Score:</strong> {score} points</p>
+            <p>⏱️ <strong>Time Taken:</strong> {timeTaken} seconds</p>
+            <p>📝 <strong>Prompts Used:</strong> {promptsUsed.length} prompts</p>
             <button onClick={handleNextClick}>Next</button>
           </div>
         </div>
