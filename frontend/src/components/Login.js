@@ -1,72 +1,95 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { teamLogin } from '../api';
-import '../index.css';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { FaPlayCircle, FaUsers, FaInstagram, FaGithub } from "react-icons/fa";
 
 export default function Login({ onLogin }) {
-  const [teamId, setTeamId] = useState('');
-  const [error, setError] = useState('');
-  const [showPopup, setShowPopup] = useState(false); // To control popup visibility
+  const [teamId, setTeamId] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
   const navigate = useNavigate();
 
-  // Handle login logic
-  const handleLogin = async (e) => {
+  // Handle login
+  const handleLogin = (e) => {
     e.preventDefault();
-    const trimmed = teamId.trim();
-    if (!trimmed) {
-      setError('Please enter a team ID');
-      return;
-    }
-
-    try {
-      await teamLogin(trimmed); // API call to handle team login
-      onLogin(trimmed); // Call parent method to update team ID in the parent component
-      setShowPopup(true); // Show instructions popup after successful login
-    } catch (err) {
-      setError('Login failed');
-    }
+    if (!teamId.trim()) return;
+    onLogin(teamId.trim());
+    setShowPopup(true);
   };
 
-  // Handle the start game logic
+  // Handle start game
   const handleStartGame = () => {
-    setShowPopup(false); // Hide popup
-    if (teamId.toLowerCase() === 'admin') {
-      navigate('/admin'); // Navigate to admin page if team is admin
+    setShowPopup(false);
+    if (teamId.toLowerCase() === "admin") {
+      navigate("/admin");
     } else {
-      navigate('/game'); // Navigate to game page for normal teams
+      navigate("/game", { state: { teamId } });
     }
   };
 
   return (
-    <div className="login-container">
-      <h2>Team Login</h2>
-      <form onSubmit={handleLogin} className="login-form">
-        <input
-          type="text"
-          placeholder="Enter Team ID"
-          value={teamId}
-          onChange={(e) => setTeamId(e.target.value)}
-          className="login-input"
-        />
-        <button type="submit" className="login-button">Login</button>
+    <div className="login-wrapper">
+      {/* Social Icons */}
+      <div className="social-icons">
+        <a href="https://github.com" target="_blank" rel="noreferrer">
+          <FaGithub />
+        </a>
+        <a href="https://instagram.com" target="_blank" rel="noreferrer">
+          <FaInstagram />
+        </a>
+      </div>
+
+      {/* Title */}
+      <h1 className="app-title">PARAYATHE PARYAM</h1>
+
+      {/* Card */}
+      <form onSubmit={handleLogin} className="login-card">
+        <FaPlayCircle className="play-icon" />
+
+        <h2>
+          Welcome to <span>PARAYATHE PARYAM</span>
+        </h2>
+        <p>
+          Test your Malayalam literature knowledge through AI-generated imagery
+        </p>
+
+        {/* Input */}
+        <div className="input-group">
+          <FaUsers className="input-icon" />
+          <input
+            type="text"
+            placeholder="Enter your team ID"
+            value={teamId}
+            onChange={(e) => setTeamId(e.target.value)}
+          />
+        </div>
+
+        {/* Button */}
+        <button
+          type="submit"
+          className="start-button"
+          disabled={!teamId.trim()}
+        >
+          Start Game
+        </button>
       </form>
-      {error && <p className="error">{error}</p>}
+
+      {/* Footer */}
+      <footer>© Malayalam Literature Association</footer>
 
       {/* Instruction Popup */}
       {showPopup && (
         <div className="popup-overlay">
           <div className="popup-box">
             <h3>🎮 How to Play</h3>
-            <p>
-              Welcome to the AI Guessing Game! Here's how you can play:
-              <ul>
-                <li>Enter a prompt to generate an image.</li>
-                <li>Guess what the image represents based on your clues.</li>
-                <li>Earn points based on your accuracy and speed!</li>
-                <li>The game ends when all rounds are completed.</li>
-              </ul>
-            </p>
-            <button onClick={handleStartGame} className="start-button">Start Game</button>
+            <ul>
+              <li>Enter a team ID to log in.</li>
+              <li>Generate AI-based images using prompts.</li>
+              <li>Guess what the image represents.</li>
+              <li>Earn points based on speed and accuracy.</li>
+              <li>The game ends when all rounds are completed.</li>
+            </ul>
+            <button onClick={handleStartGame} className="start-button">
+              Start Game
+            </button>
           </div>
         </div>
       )}

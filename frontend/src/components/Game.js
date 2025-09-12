@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { generateImage, submitRound, getTimerDuration } from '../api';
 import { useNavigate } from 'react-router-dom';
-import '../index.css';
+import '../Game.css';
 
 export default function Game({ teamId }) {
   const [prompt, setPrompt] = useState('');
@@ -16,9 +16,10 @@ export default function Game({ teamId }) {
   const [showPopup, setShowPopup] = useState(false);
   const [showTimeoutPopup, setShowTimeoutPopup] = useState(false);
   const [timeTaken, setTimeTaken] = useState(0);
+  const [timerPaused, setTimerPaused] = useState(false);
 
   const timerRef = useRef(null);
-  const timerStartedRef = useRef(false); // Track if timer started
+  const timerStartedRef = useRef(false);
   const navigate = useNavigate();
 
   // Fetch timer duration on mount
@@ -38,15 +39,13 @@ export default function Game({ teamId }) {
 
   // Timer countdown effect
   useEffect(() => {
-    if (loading || guessCorrect) {
+    if (loading || guessCorrect || timerPaused) {
       clearInterval(timerRef.current);
       return;
     }
 
-    // Don't start timer until initialTimer is set
     if (timer === 0) {
       clearInterval(timerRef.current);
-      // Only show timeout popup if timer has started counting down
       if (timerStartedRef.current && !showTimeoutPopup) {
         setScore(0);
         setTimeTaken(initialTimer);
@@ -55,7 +54,6 @@ export default function Game({ teamId }) {
       return;
     }
 
-    // Start counting down timer
     timerStartedRef.current = true;
 
     timerRef.current = setInterval(() => {
@@ -74,9 +72,9 @@ export default function Game({ teamId }) {
     }, 1000);
 
     return () => clearInterval(timerRef.current);
-  }, [loading, guessCorrect, timer, initialTimer, showTimeoutPopup]);
+  }, [loading, guessCorrect, timer, initialTimer, showTimeoutPopup, timerPaused]);
 
-  // Update score as time changes only if guess not correct and timer running
+  // Update score as time changes only if guess not correct
   useEffect(() => {
     if (!guessCorrect && timer > 0) {
       setScore(timer * 2);
@@ -85,9 +83,9 @@ export default function Game({ teamId }) {
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
-
     try {
       setLoading(true);
+      setTimerPaused(true);
       const url = await generateImage(prompt);
       setPromptsUsed((prev) => [...prev, prompt]);
       setImageUrls((prev) => [...prev, url]);
@@ -96,9 +94,14 @@ export default function Game({ teamId }) {
     } catch (err) {
       console.error('Image generation failed:', err);
       alert('Image generation failed.');
+      setTimerPaused(false);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleImageLoad = () => {
+    setTimerPaused(false);
   };
 
   const handleCorrectGuess = async () => {
@@ -115,7 +118,6 @@ export default function Game({ teamId }) {
         score,
         timeTaken: taken,
       });
-
       setShowPopup(true);
     } catch (err) {
       console.error('Failed to save round:', err);
@@ -134,7 +136,8 @@ export default function Game({ teamId }) {
     setShowPopup(false);
     setShowTimeoutPopup(false);
     setTimeTaken(0);
-    timerStartedRef.current = false; // reset timer started flag
+    timerStartedRef.current = false;
+    setTimerPaused(false);
   };
 
   const handleNextClick = () => {
@@ -143,52 +146,85 @@ export default function Game({ teamId }) {
   };
 
   return (
-    <div className="container">
-      <h2>🧠 Guess the Object</h2>
-
-      <div className={`timer ${timer < 30 ? 'low' : ''}`}>
-        ⏱️ {timer > 0 ? `${timer}s` : '⏰ Time’s up!'}
+    <div className="game-page">
+      {/* Header */}
+      <div className="header">
+        <h2 className="header-title">PARAYATHE PARYAM</h2>
       </div>
 
-      {!currentImage && (
-        <div className="prompt-box">
-          <textarea
-            placeholder="Enter a prompt to generate an image"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            disabled={loading || guessCorrect || timer === 0}
-          />
-          <button
-            onClick={handleGenerate}
-            disabled={loading || !prompt.trim() || guessCorrect || timer === 0}
-          >
-            {loading ? 'Generating...' : 'Generate Image'}
-          </button>
+      {/* Timer */}
+      <div className="timer-bar">
+        <div
+          className="timer-progress"
+          style={{ width: `${(timer / initialTimer) * 100}%` }}
+        >
+          {timer > 0 ? `${timer}s left` : '⏰ Time’s up!'}
         </div>
-      )}
+      </div>
 
-      {currentImage && (
-        <div>
-          <div className="image-box">
-            <img src={currentImage} alt="AI Generated" />
-          </div>
+      {/* Game Container */}
+      <div className="game-container">
+        {/* Prompt box (if no image yet) */}
+        {!currentImage && (
+          <>
+            <div className="prompt-box">
+              <textarea
+                placeholder="Enter your prompt to generate an image clue..."
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                disabled={loading || guessCorrect || timer === 0}
+              />
+              <button
+                className="prompt-button"
+                onClick={handleGenerate}
+                disabled={loading || !prompt.trim() || guessCorrect || timer === 0}
+              >
+                {loading ? '...' : '➤'}
+              </button>
+            </div>
+            <p className="prompt-helper">
+              Describe what you want to generate as a clue for Malayalam literature
+            </p>
+          </>
+        )}
 
-          <div className="button-row">
-            <button onClick={handleCorrectGuess} disabled={guessCorrect || timer === 0}>
-              ✅ Correct Guess
-            </button>
-            <button
-              onClick={() => {
-                setCurrentImage(null);
-                setPrompt('');
-              }}
-              disabled={loading || guessCorrect || timer === 0}
-            >
-              ➕ Next Clue
-            </button>
+        {/* Image + Buttons */}
+        {currentImage && (
+          <div>
+            <div className="image-box">
+              <img
+                src={currentImage}
+                alt="AI Generated"
+                onLoad={handleImageLoad}
+              />
+            </div>
+            <div className="button-row">
+              <button
+                className="action-btn correct"
+                onClick={handleCorrectGuess}
+                disabled={guessCorrect || timer === 0}
+              >
+                ✅ Correct Guess
+              </button>
+              <button
+                className="action-btn next"
+                onClick={() => {
+                  setCurrentImage(null);
+                  setPrompt('');
+                }}
+                disabled={loading || guessCorrect || timer === 0}
+              >
+                ➕ Next Clue
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="footer">
+        © Malayalam Literature Association
+      </div>
 
       {/* Popup for correct guess */}
       {showPopup && (
@@ -204,7 +240,7 @@ export default function Game({ teamId }) {
         </div>
       )}
 
-      {/* Popup for timer running out */}
+      {/* Popup for timeout */}
       {showTimeoutPopup && (
         <div className="popup-overlay">
           <div className="popup-box">
