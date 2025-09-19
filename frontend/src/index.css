@@ -1,102 +1,132 @@
-body{
+/* Reset and base */
+body, html, #root {
   margin: 0;
-}
-/* Wrapper */
-.login-wrapper {
+  padding: 0;
+  height: 100%;
+  font-family: "Poppins", sans-serif;
+  background: #0b0b0b;
+  color: #fff;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+}
+
+/* Page wrapper */
+.login-page {
   min-height: 100vh;
-  background: #0e0e0e;
-  color: #fff;
-  text-align: center;
-  padding: 1rem;
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: #0b0b0b;
 }
 
-/* Title */
-.app-title {
-  font-size: 1.8rem;
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background-color: #2e1f03; /* vintage dark gold */
+  border-bottom: 3px solid #c97a20;
+}
+
+.header-logo {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+}
+
+.header-logo.left {
+  margin-right: 20px;
+}
+
+.header-logo.right {
+  margin-left: 20px;
+}
+
+.header-title {
+  flex: 1;
+  font-size: 2rem;
   font-weight: 700;
-  color: #f9a825;
-  margin-bottom: 2rem;
-  letter-spacing: 1px;
+  color: #c97a20;
+  text-align: center;
+  letter-spacing: 1.5px;
+  user-select: none;
 }
 
-/* Card */
+/* Main container */
+.login-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+}
+
+/* Login Card */
 .login-card {
   background: #1a1a1a;
-  padding: 2rem;
+  padding: 3rem 2.5rem;
   border-radius: 16px;
-  box-shadow: 0 0 25px rgba(255, 153, 0, 0.2);
+  box-shadow: 0 0 25px rgba(201, 122, 32, 0.3);
   max-width: 420px;
   width: 100%;
+  text-align: center;
   animation: fadeIn 0.5s ease;
 }
 
-.play-icon {
-  font-size: 3rem;
-  color: #f9a825;
-  margin-bottom: 1rem;
-}
-
-.login-card h2 {
+/* Heading */
+.login-welcome {
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.6rem;
 }
 
-.login-card h2 span {
-  color: #f9a825;
+.login-welcome span {
+  color: #c97a20;
 }
 
-.login-card p {
-  font-size: 0.95rem;
-  color: #aaa;
-  margin-bottom: 1.5rem;
+/* Description */
+.login-desc {
+  font-size: 1rem;
+  color: #bbb;
+  margin-bottom: 2rem;
+  line-height: 1.4;
 }
 
-/* Input */
+/* Input group */
 .input-group {
-  display: flex;
-  align-items: center;
   background: #2b2b2b;
   padding: 0.75rem 1rem;
   border-radius: 10px;
-  margin-bottom: 1.2rem;
-}
-
-.input-icon {
-  margin-right: 10px;
-  color: #f9a825;
+  margin-bottom: 1.8rem;
 }
 
 .input-group input {
+  width: 100%;
   background: transparent;
   border: none;
   outline: none;
-  flex: 1;
   color: #fff;
-  font-size: 1rem;
+  font-size: 1.1rem;
+  font-weight: 500;
 }
 
 /* Button */
 .start-button {
   width: 100%;
-  padding: 0.9rem;
-  font-size: 1rem;
-  font-weight: 600;
-  background: #f9a825;
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: #c97a20;
   color: #000;
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
 .start-button:hover:not(:disabled) {
-  background: #ffb300;
-  box-shadow: 0 0 10px rgba(249, 168, 37, 0.6);
+  background: #a55e1e;
+  box-shadow: 0 0 15px rgba(201, 122, 32, 0.8);
 }
 
 .start-button:disabled {
@@ -104,37 +134,15 @@ body{
   cursor: not-allowed;
 }
 
-/* Social icons */
-.social-icons {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  display: flex;
-  gap: 12px;
-}
-
-.social-icons a {
-  color: #f9a825;
-  font-size: 1.3rem;
-  transition: transform 0.3s ease;
-}
-
-.social-icons a:hover {
-  transform: scale(1.2);
-}
-
 /* Footer */
-footer {
-  margin-top: 2rem;
-  font-size: 0.85rem;
-  color: #888;
+.footer {
+  text-align: center;
+  padding: 18px 20px;
+  font-size: 0.9rem;
+  color: #777;
+  user-select: none;
 }
 
-/* Animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
 /* Popup Overlay */
 .popup-overlay {
   position: fixed;
@@ -150,10 +158,10 @@ footer {
 /* Popup Box */
 .popup-box {
   background: #1a1a1a;
-  padding: 2rem;
+  padding: 2.5rem;
   border-radius: 16px;
-  box-shadow: 0 0 25px rgba(249, 168, 37, 0.3);
-  max-width: 450px;
+  box-shadow: 0 0 25px rgba(201, 122, 32, 0.4);
+  max-width: 460px;
   width: 90%;
   text-align: left;
   color: #fff;
@@ -161,22 +169,39 @@ footer {
 }
 
 .popup-box h3 {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   margin-bottom: 1rem;
-  color: #f9a825;
+  color: #c97a20;
 }
 
 .popup-box ul {
-  margin: 0 0 1.5rem 1rem;
+  margin: 0 0 1.5rem 1.5rem;
   padding: 0;
   list-style: disc;
-  color: #bbb;
-  font-size: 0.95rem;
-  line-height: 1.5;
+  color: #ccc;
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
 /* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes scaleUp {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }

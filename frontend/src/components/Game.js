@@ -204,7 +204,7 @@ export default function Game({ teamId }) {
                 onClick={handleCorrectGuess}
                 disabled={guessCorrect || timer === 0}
               >
-                ✅ Correct Guess
+              Correct Guess
               </button>
               <button
                 className="action-btn next"
@@ -214,7 +214,7 @@ export default function Game({ teamId }) {
                 }}
                 disabled={loading || guessCorrect || timer === 0}
               >
-                ➕ Next Clue
+              Next Clue
               </button>
             </div>
           </div>
@@ -235,7 +235,7 @@ export default function Game({ teamId }) {
             <p>⭐ <strong>Score:</strong> {score} points</p>
             <p>⏱️ <strong>Time Taken:</strong> {timeTaken} seconds</p>
             <p>📝 <strong>Prompts Used:</strong> {promptsUsed.length} prompts</p>
-            <button onClick={handleNextClick}>Next</button>
+            <button className="action-btn next" onClick={handleNextClick}>Next</button>
           </div>
         </div>
       )}
@@ -249,7 +249,7 @@ export default function Game({ teamId }) {
             <p>⭐ <strong>Score:</strong> {score} points</p>
             <p>⏱️ <strong>Time Taken:</strong> {timeTaken} seconds</p>
             <p>📝 <strong>Prompts Used:</strong> {promptsUsed.length} prompts</p>
-            <button onClick={handleNextClick}>Next</button>
+            <button className="action-btn next" onClick={handleNextClick}>Next</button>
           </div>
         </div>
       )}

@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { getLeaderboard, getTimerDuration, setTimerDuration } from '../api';
+import {
+  getLeaderboard,
+  getTimerDuration,
+  setTimerDuration,
+  resetTeam,
+  resetAllTeams,
+} from '../api';
+import '../admin.css';
 
 export default function Admin() {
   const [teams, setTeams] = useState([]);
@@ -36,12 +43,22 @@ export default function Admin() {
   const handleReset = async (teamId) => {
     if (!window.confirm(`Reset data for ${teamId}?`)) return;
     try {
-      await fetch(`http://localhost:5000/api/admin/reset-team/${teamId}`, {
-        method: 'POST',
-      });
+      await resetTeam(teamId);
       fetchLeaderboard();
+      alert(`✅ Reset data for ${teamId}`);
     } catch (err) {
       alert('Reset failed');
+    }
+  };
+
+  const handleResetAll = async () => {
+    if (!window.confirm('Are you sure you want to reset data for ALL teams?')) return;
+    try {
+      await resetAllTeams();
+      fetchLeaderboard();
+      alert('✅ Reset data for ALL teams');
+    } catch (err) {
+      alert('Reset all failed');
     }
   };
 
@@ -76,6 +93,10 @@ export default function Admin() {
         />
         <button onClick={handleSetDuration}>Update Timer</button>
       </div>
+
+      <button className="reset-all-btn" onClick={handleResetAll}>
+        Reset All Teams
+      </button>
 
       <table>
         <thead>

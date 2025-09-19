@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:5000/api'; 
+const BASE_URL = 'http://localhost:5000/api';
 
 // Team Login
 export async function teamLogin(teamId) {
@@ -39,20 +39,36 @@ export async function getLeaderboard() {
   return await res.json();
 }
 
-// Get Timer Duration (New for Game.js to load)
+// Get Timer Duration
 export async function getTimerDuration() {
   const res = await fetch(`${BASE_URL}/admin/timer`);
   if (!res.ok) throw new Error(await res.text());
   const data = await res.json();
-  return data.duration;  // Assuming the response is like { duration: 120 }
+  return data.duration;
 }
 
-// Set Timer Duration (Used in Admin.js to set the timer)
+// Set Timer Duration
 export async function setTimerDuration(duration) {
   const res = await fetch(`${BASE_URL}/admin/timer`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ duration }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+}
+
+// Reset specific team
+export async function resetTeam(teamId) {
+  const res = await fetch(`${BASE_URL}/admin/reset-team/${teamId}`, {
+    method: 'POST',
+  });
+  if (!res.ok) throw new Error(await res.text());
+}
+
+// Reset all teams
+export async function resetAllTeams() {
+  const res = await fetch(`${BASE_URL}/admin/reset-all-teams`, {
+    method: 'POST',
   });
   if (!res.ok) throw new Error(await res.text());
 }
